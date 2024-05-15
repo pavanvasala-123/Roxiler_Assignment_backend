@@ -9,9 +9,9 @@ const mysqlRemote = {
   user: "avnadmin",
   password: "AVNS_Xm6aldQXMTbIwH7sBgQ",
   database: "defaultdb",
-  port:"16016",
+  port: "16016",
   connectionLimit: 10,
-}
+};
 // {
 //   host: "localhost",
 //   user: "root",
@@ -20,9 +20,7 @@ const mysqlRemote = {
 //   connectionLimit: 10,
 // }
 
-
 const connection = mysql.createPool(mysqlRemote);
-
 
 app.get("/initialize-database", async (req, res) => {
   try {
@@ -31,7 +29,6 @@ app.get("/initialize-database", async (req, res) => {
     );
     const data = await response.json();
 
-    
     await connection.query(
       "CREATE TABLE IF NOT EXISTS products (id INT AUTO_INCREMENT PRIMARY KEY, title VARCHAR(255), price DECIMAL(10, 2), description TEXT, category VARCHAR(255), image VARCHAR(255), sold BOOLEAN, dateOfSale DATETIME)"
     );
@@ -62,8 +59,6 @@ app.get("/initialize-database", async (req, res) => {
   }
 });
 
-
-
 app.get("/transactions", async (req, res) => {
   const { page = 1, perPage = 10, search, month } = req.query;
   const offset = (page - 1) * perPage; // Calculate offset based on page number and perPage
@@ -74,7 +69,7 @@ app.get("/transactions", async (req, res) => {
     whereClause = "AND (title LIKE ? OR description LIKE ? OR price LIKE ?)";
     params = [`%${search}%`, `%${search}%`, `%${search}%`];
   }
-  
+
   let monthCondition = "";
   if (month) {
     monthCondition = `AND MONTH(dateOfSale) = ?`;
@@ -97,7 +92,6 @@ app.get("/transactions", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch transactions." });
   }
 });
-
 
 // Statistics API
 app.get("/statistics", async (req, res) => {
@@ -142,8 +136,6 @@ app.get("/statistics", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch statistics." });
   }
 });
-
-
 
 // Bar Chart API
 app.get("/bar-chart", async (req, res) => {
@@ -202,26 +194,3 @@ app.get("/pie-chart", async (req, res) => {
   }
 });
 
-// Combined API
-app.get("/combined-data", async (req, res) => {
-  try {
-    const [transactions] = await connection.query("SELECT * FROM products");
-    const [statistics] = await connection.query("SELECT * FROM statistics");
-    const [barChart] = await connection.query("SELECT * FROM bar_chart");
-    const [pieChart] = await connection.query("SELECT * FROM pie_chart");
-
-    res.status(200).json({
-      transactions,
-      statistics,
-      barChart,
-      pieChart,
-    });
-  } catch (error) {
-    console.error("Error fetching combined data:", error);
-    res.status(500).json({ error: "Failed to fetch combined data." });
-  }
-});
-
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
-});
