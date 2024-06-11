@@ -79,8 +79,8 @@ app.get("/transactions", async (req, res) => {
   try {
     const [results] = await connection.query(
       `
-      SELECT * FROM products
-      WHERE 1=1 ${whereClause} ${monthCondition}
+      SELECT * FROM defaultdb
+      WHERE ${whereClause} ${monthCondition}
       LIMIT ?, ?
     `,
       [...params, offset, parseInt(perPage)] // Parse perPage as integer
@@ -96,40 +96,42 @@ app.get("/transactions", async (req, res) => {
 // Statistics API
 app.get("/statistics", async (req, res) => {
   const { month } = req.query;
-  // console.log(month);
+  console.log(month);
 
   try {
-    const [totalSaleAmount] = await connection.query(
+    const totalSaleAmount = await connection.query(
       `
       SELECT SUM(price) AS totalSaleAmount
-      FROM products
+      FROM defaultdb
       WHERE MONTH(dateOfSale) = ?
     `,
       [month]
     );
 
-    const [totalSoldItems] = await connection.query(
+    const totalSoldItems = await connection.query(
       `
       SELECT COUNT(*) AS totalSoldItems
-      FROM products
+      FROM defaultdb
       WHERE MONTH(dateOfSale) = ? AND sold = true
     `,
       [month]
     );
+    
 
-    const [totalNotSoldItems] = await connection.query(
+    const totalNotSoldItems = await connection.query(
       `
       SELECT COUNT(*) AS totalNotSoldItems
-      FROM products
+      FROM defaultdb
       WHERE MONTH(dateOfSale) = ? AND sold = false
     `,
       [month]
     );
+    
 
     res.status(200).json({
-      totalSaleAmount: totalSaleAmount[0].totalSaleAmount || 0,
-      totalSoldItems: totalSoldItems[0].totalSoldItems || 0,
-      totalNotSoldItems: totalNotSoldItems[0].totalNotSoldItems || 0,
+      totalSaleAmount: totalSaleAmount || 0,
+      totalSoldItems: totalSoldItems || 0,
+      totalNotSoldItems: totalNotSoldItems || 0,
     });
   } catch (error) {
     console.error("Error fetching statistics:", error);
@@ -158,8 +160,8 @@ app.get("/bar-chart", async (req, res) => {
           ELSE '901 - above'
         END AS priceRange,
         COUNT(*) AS itemCount
-      FROM products
-      WHERE MONTH(dateOfSale) = ?
+      FROM defaultdb
+      WHERE MONTH(dateOfSale) = ? 
       GROUP BY priceRange
     `,
       [month]
@@ -172,25 +174,7 @@ app.get("/bar-chart", async (req, res) => {
   }
 });
 
-// Pie Chart API
-app.get("/pie-chart", async (req, res) => {
-  const { month } = req.query;
 
-  try {
-    const [results] = await connection.query(
-      `
-      SELECT category, COUNT(*) AS itemCount
-      FROM products
-      WHERE MONTH(dateOfSale) = ?
-      GROUP BY category
-    `,
-      [month]
-    );
-
-    res.status(200).json(results);
-  } catch (error) {
-    console.error("Error fetching pie chart data:", error);
-    res.status(500).json({ error: "Failed to fetch pie chart data." });
-  }
+app.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
 });
-
