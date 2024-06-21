@@ -188,9 +188,12 @@
 const express = require("express");
 const { MongoClient } = require("mongodb");
 const axios = require("axios");
+const cors = require('cors')
 
 const app = express();
+app.use(cors())
 const port = 3000;
+
 
 const mongoUri =
   "mongodb+srv://pavanvasalaa:pavan123@cluster0.x9pufdk.mongodb.net/";
